@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 466px;
+  height: 180px;
+  background: #0c0c14;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="466" height="180"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+/* ── helpers ── */
+function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+function easeInOut(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+/* ── design tokens ── */
+const BG          = '#0c0c14';
+const SEL_BG      = '#ffffff';
+const DEF_BG      = '#2b2b2b';
+const HOV_BG      = '#3a3a3a';
+const ACT_BG      = '#333333';
+
+const SEL_TEXT    = '#111111';
+const DEF_TEXT    = '#888888';
+const HOV_TEXT    = '#cccccc';
+
+const SEL_BADGE_BG   = '#FFCC00';
+const SEL_BADGE_TEXT = '#1a1000';
+const DEF_BADGE_BG   = '#3e3e3e';
+const DEF_BADGE_TEXT = '#888888';
+const HOV_BADGE_BG   = '#4a4a4a';
+const HOV_BADGE_TEXT = '#cccccc';
+
+/* ── layout ── */
+const TAB_H  = 36;
+const TAB_R  = 8;
+const PAD_X  = 14;
+const GAP    = 8;
+const INNER_GAP = 8; // between label and badge
+
+ctx.font = '500 13px -apple-system, "SF Pro Text", system-ui, sans-serif';
+
+const tabDefs = [
+  { label: 'My Dashboards', badge: '8' },
+  { label: 'ExTrac Curated', badge: '12' },
+];
+
+// Measure
+tabDefs.forEach(t => {
+  t.labelW = ctx.measureText(t.label).width;
+});
+ctx.font = 'bold 11px -apple-system, "SF Pro Text", system-ui, sans-serif';
+tabDefs.forEach(t => {
+  t.badgeW = Math.max(20, ctx.measureText(t.badge).width + 12);
+  t.tabW   = PAD_X + t.labelW + INNER_GAP + t.badgeW + PAD_X;
+});
+
+const totalW = tabDefs.reduce((s, t) => s + t.tabW, 0) + GAP;
+let cx2 = (466 - totalW) / 2;
+tabDefs.forEach(t => { t.x = cx2; cx2 += t.tabW + GAP; });
+const tabY = (180 - TAB_H) / 2;
+
+function drawTab(t, state, pressT) {
+  let bgC, textC, badgeBg, badgeText;
+  if (state === 'selected') {
+    bgC = SEL_BG; textC = SEL_TEXT; badgeBg = SEL_BADGE_BG; badgeText = SEL_BADGE_TEXT;
+  } else if (state === 'hover') {
+    bgC = HOV_BG; textC = HOV_TEXT; badgeBg = HOV_BADGE_BG; badgeText = HOV_BADGE_TEXT;
+  } else {
+    bgC = DEF_BG; textC = DEF_TEXT; badgeBg = DEF_BADGE_BG; badgeText = DEF_BADGE_TEXT;
+  }
+
+  // Press effect: slight scale down
+  const scaleY = pressT > 0 ? lerp(1, 0.94, pressT) : 1;
+  const dy = pressT > 0 ? lerp(0, 1, pressT) : 0;
+  ctx.save();
+  ctx.translate(t.x + t.tabW / 2, tabY + TAB_H / 2 + dy);
+  ctx.scale(1, scaleY);
+  ctx.translate(-(t.tabW / 2), -(TAB_H / 2));
+
+  roundRect(0, 0, t.tabW, TAB_H, TAB_R);
+  ctx.fillStyle = bgC;
+  ctx.fill();
+
+  // Label
+  ctx.font = '500 13px -apple-system, "SF Pro Text", system-ui, sans-serif';
+  ctx.fillStyle = textC;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  ctx.fillText(t.label, PAD_X, TAB_H / 2);
+
+  // Badge
+  const bx = PAD_X + t.labelW + INNER_GAP;
+  const bh = 20;
+  const by = (TAB_H - bh) / 2;
+  roundRect(bx, by, t.badgeW, bh, 5);
+  ctx.fillStyle = badgeBg;
+  ctx.fill();
+
+  ctx.font = 'bold 11px -apple-system, "SF Pro Text", system-ui, sans-serif';
+  ctx.fillStyle = badgeText;
+  ctx.textAlign = 'center';
+  ctx.fillText(t.badge, bx + t.badgeW / 2, TAB_H / 2);
+
+  ctx.restore();
+}
+
+/* ── cursor ── */
+function drawCursor(x, y, pressing) {
+  const s = pressing ? 0.88 : 1.0;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s, s);
+
+  // Shadow
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur  = 3;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 1;
+
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0, 18);
+  ctx.lineTo(4, 14);
+  ctx.lineTo(7, 20);
+  ctx.lineTo(9.5, 19);
+  ctx.lineTo(6.5, 13);
+  ctx.lineTo(11, 13);
+  ctx.closePath();
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth   = 1.5;
+  ctx.fillStyle   = '#ffffff';
+  ctx.stroke();
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ── timeline ── */
+// 150 frames @ ~24fps ≈ 6.25 s loop
+const TOTAL = 150;
+const FPS   = 24;
+
+// Cursor rest pos (right side, matches screenshot)
+const REST_X = 305, REST_Y = 128;
+
+function tabCenter(i) {
+  const t = tabDefs[i];
+  return { x: t.x + t.tabW / 2, y: tabY + TAB_H / 2 };
+}
+
+function getState(f) {
+  const ec = tabCenter(1); // ExTrac Curated
+  const md = tabCenter(0); // My Dashboards
+
+  /* Phase map:
+     0–18   : cursor moves toward ExTrac
+     18–35  : hover on ExTrac
+     35–42  : click ExTrac (press down+up)
+     42–60  : ExTrac selected, cursor lingers
+     60–85  : cursor moves toward My Dashboards
+     85–100 : hover on My Dashboards
+     100–108: click My Dashboards
+     108–130: My Dashboards selected, cursor moves back to rest
+     130–150: idle at rest (seamless loop back to 0)
+  */
+
+  let tab0 = 'selected', tab1 = 'default';
+  let cx = REST_X, cy = REST_Y;
+  let press0 = 0, press1 = 0;
+
+  if (f < 18) {
+    // Move to ExTrac
+    const t = easeInOut(f / 18);
+    cx = lerp(REST_X, ec.x - 2, t);
+    cy = lerp(REST_Y, ec.y - 2, t);
+    if (t > 0.75) tab1 = 'hover';
+
+  } else if (f < 35) {
+    // Hover on ExTrac
+    cx = ec.x - 2; cy = ec.y - 2;
+    tab1 = 'hover';
+
+  } else if (f < 42) {
+    // Click ExTrac
+    cx = ec.x - 2; cy = ec.y - 2;
+    tab1 = 'hover';
+    const pf = f - 35;
+    press1 = pf < 3.5 ? easeInOut(pf / 3.5) : easeInOut(1 - (pf - 3.5) / 3.5);
+
+  } else if (f < 60) {
+    // ExTrac now selected
+    cx = ec.x - 2; cy = ec.y - 2;
+    tab0 = 'default'; tab1 = 'selected';
+
+  } else if (f < 85) {
+    // Move to My Dashboards
+    const t = easeInOut((f - 60) / 25);
+    cx = lerp(ec.x - 2, md.x - 2, t);
+    cy = lerp(ec.y - 2, md.y - 2, t);
+    tab0 = 'default'; tab1 = 'selected';
+    if (t > 0.75) tab0 = 'hover';
+
+  } else if (f < 100) {
+    // Hover on My Dashboards
+    cx = md.x - 2; cy = md.y - 2;
+    tab0 = 'hover'; tab1 = 'selected';
+
+  } else if (f < 108) {
+    // Click My Dashboards
+    cx = md.x - 2; cy = md.y - 2;
+    tab0 = 'hover'; tab1 = 'selected';
+    const pf = f - 100;
+    press0 = pf < 4 ? easeInOut(pf / 4) : easeInOut(1 - (pf - 4) / 4);
+
+  } else if (f < 130) {
+    // My Dashboards selected, cursor moves back
+    const t = easeInOut((f - 108) / 22);
+    cx = lerp(md.x - 2, REST_X, t);
+    cy = lerp(md.y - 2, REST_Y, t);
+    tab0 = 'selected'; tab1 = 'default';
+
+  } else {
+    // Idle
+    cx = REST_X; cy = REST_Y;
+    tab0 = 'selected'; tab1 = 'default';
+  }
+
+  return { cx, cy, tab0, tab1, press0, press1 };
+}
+
+/* ── render loop ── */
+let frame = 0;
+function tick() {
+  const s = getState(frame);
+
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, 466, 180);
+
+  drawTab(tabDefs[0], s.tab0, s.press0);
+  drawTab(tabDefs[1], s.tab1, s.press1);
+  drawCursor(s.cx, s.cy, s.press0 > 0.1 || s.press1 > 0.1);
+
+  frame = (frame + 1) % TOTAL;
+  setTimeout(() => requestAnimationFrame(tick), 1000 / FPS);
+}
+
+tick();
+</script>
+</body>
+</html>

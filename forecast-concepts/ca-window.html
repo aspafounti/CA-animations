@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forecast — CA Window Response Treatments</title>
+<style>
+  :root {
+    --bg: #1a1a1a;
+    --window-bg: #252525;
+    --response-bg: #2d2d2d;
+    --topbar-bg: #242424;
+    --input-bg: #222222;
+    --border: #383838;
+    --border-subtle: #303030;
+    --text-primary: #f0f0f0;
+    --text-secondary: #aaa;
+    --text-muted: #666;
+    --yellow: #f5c518;
+    --yellow-prompt: #f5c518;
+
+    --hatch: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M-1,1 l2,-2 M0,12 l12,-12 M11,13 l2,-2' stroke='rgba(255,255,255,0.055)' stroke-width='1'/%3E%3C/svg%3E");
+    --hatch-faint: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M-1,1 l2,-2 M0,12 l12,-12 M11,13 l2,-2' stroke='rgba(255,255,255,0.028)' stroke-width='1'/%3E%3C/svg%3E");
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 32px 24px 64px;
+  }
+
+  .page-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--text-muted); margin-bottom: 24px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .page-label::after { content: ''; flex:1; height:1px; background: var(--border-subtle); }
+
+  /* ── Variant tabs ── */
+  .tabs {
+    display: flex; gap: 2px; margin-bottom: 28px;
+    background: #1e1e1e; border: 1px solid var(--border-subtle);
+    border-radius: 8px; padding: 3px; max-width: 600px;
+  }
+  .tab {
+    flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 500;
+    color: var(--text-muted); border-radius: 5px; cursor: pointer;
+    background: none; border: none; transition: all 0.12s; text-align: center;
+    white-space: nowrap;
+  }
+  .tab:hover { color: var(--text-secondary); }
+  .tab.active { background: #2e2e2e; color: var(--text-primary); }
+
+  .variant { display: none; }
+  .variant.active { display: block; }
+
+  /* ── CA Window shell ── */
+  .ca-window {
+    width: 460px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--window-bg);
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  }
+
+  .ca-topbar {
+    display: flex; align-items: center;
+    padding: 0 14px;
+    height: 44px;
+    background: var(--topbar-bg);
+    border-bottom: 1px solid var(--border-subtle);
+    gap: 8px;
+  }
+  .ca-icon {
+    width: 18px; height: 18px; opacity: 0.5;
+  }
+  .ca-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .ca-info {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 1px solid #555; display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #666; cursor: pointer;
+  }
+  .ca-controls { margin-left: auto; display: flex; gap: 10px; }
+  .ca-controls span {
+    font-size: 16px; color: #555; cursor: pointer; line-height: 1;
+    transition: color 0.1s;
+  }
+  .ca-controls span:hover { color: #888; }
+
+  /* Left sidebar */
+  .ca-body-wrap { display: flex; }
+  .ca-sidebar {
+    width: 36px; padding: 12px 0;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    border-right: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+  .sidebar-icon { font-size: 14px; color: #555; cursor: pointer; }
+
+  /* Main content */
+  .ca-main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+  /* User prompt bubble */
+  .user-prompt {
+    background: var(--yellow);
+    border-radius: 10px;
+    padding: 10px 13px;
+    font-size: 12.5px;
+    color: #1a1400;
+    font-weight: 500;
+    line-height: 1.5;
+    margin: 12px 14px 10px;
+  }
+
+  /* Pagination row */
+  .pagination-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 14px 8px;
+    font-size: 11px; color: var(--text-muted);
+  }
+  .pag-arrows { display: flex; align-items: center; gap: 6px; }
+  .pag-arrow { font-size: 13px; color: #555; cursor: pointer; }
+  .pag-count { font-size: 11px; }
+  .pag-sep { color: #444; }
+
+  /* Response text area */
+  .response-area {
+    padding: 4px 14px 10px;
+    flex: 1;
+  }
+
+  .response-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.68;
+  }
+  .response-text p { margin-bottom: 12px; }
+  .response-text p:last-child { margin-bottom: 0; }
+  .response-text strong { color: var(--text-primary); font-weight: 600; }
+  .cite {
+    font-size: 9px; vertical-align: super; line-height: 0;
+    color: var(--yellow); font-weight: 500; letter-spacing: 0.02em;
+  }
+
+  /* Toolbar */
+  .response-toolbar {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px 10px;
+  }
+  .toolbar-btn {
+    width: 30px; height: 30px; border-radius: 7px;
+    border: 1px solid var(--border);
+    background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #666; font-size: 12px;
+    transition: all 0.1s;
+  }
+  .toolbar-btn:hover { background: #333; color: #999; }
+  .toolbar-btn.font { font-size: 10px; font-weight: 600; }
+
+  /* Input area */
+  .ca-input-area {
+    border-top: 1px solid var(--border-subtle);
+    padding: 10px 14px 12px;
+    background: var(--input-bg);
+  }
+  .forecast-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #f0f0f0; color: #111;
+    border-radius: 5px; padding: 3px 7px;
+    font-size: 11px; font-weight: 600; margin-bottom: 7px;
+  }
+  .forecast-tag .x { color: #666; cursor: pointer; font-size: 10px; margin-left: 1px; }
+  .input-placeholder {
+    font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 10px;
+    font-style: italic;
+  }
+  .input-bar {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .input-actions { display: flex; align-items: center; gap: 6px; flex: 1; }
+  .input-actions span { font-size: 14px; color: #555; cursor: pointer; }
+  .input-mode {
+    font-size: 11px; color: #666;
+    display: flex; align-items: center; gap: 3px; margin-left: 2px;
+  }
+  .quick-answers-btn {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 11px; color: #666;
+    background: transparent; border: none; cursor: pointer;
+    padding: 4px 6px; border-radius: 5px;
+  }
+  .send-btn {
+    width: 30px; height: 30px; border-radius: 7px;
+    background: var(--yellow); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #1a1400;
+  }
+
+  /* ═══════════════════════════════════════
+     TREATMENT A — Hatch on the response bg
+     Entire scrollable text area gets the
+     hatch; text floats over it
+  ═══════════════════════════════════════ */
+  .treat-a .response-area {
+    background-color: var(--response-bg);
+    background-image: var(--hatch-faint);
+    margin: 0; padding: 10px 14px 8px;
+    border-radius: 0;
+  }
+
+  /* ═══════════════════════════════════════
+     TREATMENT B — Header band + clean body
+     Hatched band at top carries the metadata;
+     body text is clean below it
+  ═══════════════════════════════════════ */
+  .treat-b .forecast-header-band {
+    background-color: #262626;
+    background-image: var(--hatch);
+    border-bottom: 1px solid #3a3a3a;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 0;
+  }
+
+  /* ═══════════════════════════════════════
+     TREATMENT C — Left rail accent
+     A persistent hatched left rail marks
+     the response as forecast; no bg change
+  ═══════════════════════════════════════ */
+  .treat-c .response-area {
+    padding-left: 10px;
+    border-left: none;
+    position: relative;
+  }
+  .forecast-rail {
+    position: absolute;
+    left: 14px; top: 4px; bottom: 10px; width: 3px;
+    background-color: #383838;
+    background-image: var(--hatch);
+    border-radius: 2px;
+  }
+  .treat-c .response-area .inner {
+    padding-left: 14px;
+  }
+  .treat-c .forecast-label-inline {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  /* ═══════════════════════════════════════
+     TREATMENT D — Inline paragraph hatching
+     Only the probability-bearing paragraph
+     gets a hatched callout treatment
+  ═══════════════════════════════════════ */
+  .forecast-para {
+    background-color: #272727;
+    background-image: var(--hatch);
+    border-radius: 7px;
+    border: 1px solid #383838;
+    border-left: 2px solid #585858;
+    padding: 10px 12px;
+    margin: 0 -2px 12px;
+    position: relative;
+  }
+  .forecast-para-label {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 7px;
+  }
+
+  /* ── Shared badge ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; border-radius: 4px; padding: 3px 6px; line-height: 1;
+  }
+  .badge-likely { background: #fff; color: #111; }
+  .badge-possible { background: #333; color: #999; border: 1px solid #444; }
+  .badge-forecast-tag {
+    background: rgba(255,255,255,0.08); color: #888;
+    border: 1px solid #3a3a3a; font-size: 9px; padding: 2px 6px;
+    border-radius: 3px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+  }
+  .pred-date {
+    font-size: 10.5px; color: #777;
+    background: rgba(255,255,255,0.05); border-radius: 4px; padding: 2px 7px;
+  }
+
+  /* ── Annotation ── */
+  .annotation {
+    margin-top: 14px;
+    font-size: 11px; color: var(--text-muted); line-height: 1.6;
+    padding-left: 2px;
+  }
+  .annotation strong { color: #777; }
+
+  .window-wrap {
+    display: flex; gap: 20px; align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .window-note {
+    flex: 1; min-width: 200px;
+    padding-top: 8px;
+  }
+  .window-note h3 {
+    font-size: 12px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .window-note p {
+    font-size: 11.5px; color: var(--text-muted); line-height: 1.65;
+    margin-bottom: 8px;
+  }
+  .window-note p strong { color: #888; }
+
+  /* for the scrollable preview to not be too tall */
+  .response-area { max-height: 320px; overflow-y: auto; }
+  .response-area::-webkit-scrollbar { width: 4px; }
+  .response-area::-webkit-scrollbar-track { background: transparent; }
+  .response-area::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="page-label">CA Window — Forecast response treatments</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="show('a')">A · Hatch background</button>
+  <button class="tab" onclick="show('b')">B · Header band</button>
+  <button class="tab" onclick="show('c')">C · Left rail</button>
+  <button class="tab" onclick="show('d')">D · Inline para</button>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     A — Hatch the response background
+═══════════════════════════════════════════ -->
+<div class="variant active" id="va">
+  <div class="window-wrap">
+    <div class="ca-window treat-a">
+      <div class="ca-topbar">
+        <svg class="ca-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#888" stroke-width="1.2"/><path d="M6 9h6M9 6v6" stroke="#888" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span class="ca-title">Co-Analyst</span>
+        <div class="ca-info">i</div>
+        <div class="ca-controls">
+          <span>＋</span><span>−</span><span>✕</span>
+        </div>
+      </div>
+      <div class="ca-body-wrap">
+        <div class="ca-sidebar">
+          <span class="sidebar-icon">🔖</span>
+          <span class="sidebar-icon">✏️</span>
+        </div>
+        <div class="ca-main">
+          <div class="user-prompt">If Israel invades Lebanon, what actions will Iran take and how likely is direct military intervention?</div>
+          <div class="pagination-row">
+            <div class="pag-arrows">
+              <span class="pag-arrow">‹</span>
+              <span class="pag-count">1/3</span>
+              <span class="pag-arrow">›</span>
+            </div>
+            <span class="pag-sep">|</span>
+            <span>Quick Answers</span>
+            <span class="pag-sep">|</span>
+            <span>Default</span>
+          </div>
+
+          <!-- Hatched response area -->
+          <div class="response-area">
+            <!-- Small forecast label sits at very top of the text area -->
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;">
+              <span class="badge badge-likely">
+                <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4.5" stroke="#111" stroke-width="1"/><path d="M5 3v2.5" stroke="#111" stroke-width="1.2" stroke-linecap="round"/><circle cx="5" cy="7" r="0.6" fill="#111"/></svg>
+                Likely
+              </span>
+              <span class="badge-forecast-tag">Forecast</span>
+              <span class="pred-date" style="margin-left:auto;">Based on current indicators</span>
+            </div>
+            <div class="response-text">
+              <p>If Israel invades Lebanon, several indicators suggest that Iran will take <strong>significant actions</strong>. Multiple sources indicate that Iran has explicitly warned of direct intervention if Israel attacks Lebanon.<span class="cite">1 2 3 4 5</span> This is reinforced by statements from Iranian officials and affiliated groups.</p>
+              <p>Iran's potential actions could include direct military intervention or support for its proxies. Hezbollah is expected to escalate its aggression against Israel in response to an invasion.<span class="cite">10 11 12 13 14</span> This is consistent with Iran's strategy of using proxy forces to exert influence.</p>
+              <p>Additionally, Iran has reportedly prepared for a broader regional conflict, indicating readiness to engage in a multi-front war involving its allies in Syria, Iraq, and Yemen.<span class="cite">15 18 19 20</span></p>
+              <p>The likelihood of indirect action is <strong>almost certain</strong>, while direct action is a <strong>realistic possibility to likely</strong>, depending on the evolution of the conflict and the crossing of Iranian red lines.</p>
+            </div>
+          </div>
+
+          <div class="response-toolbar">
+            <button class="toolbar-btn font">Aa</button>
+            <button class="toolbar-btn">⧉</button>
+            <button class="toolbar-btn">◎</button>
+            <button class="toolbar-btn">↻</button>
+          </div>
+          <div class="ca-input-area">
+            <div><span class="forecast-tag">Forecast <span class="x">×</span></span></div>
+            <div class="input-placeholder">Describe what you would like to summarise…</div>
+            <div class="input-bar">
+              <div class="input-actions">
+                <span>@</span>
+                <span>📎</span>
+                <span class="input-mode">Default</span>
+              </div>
+              <button class="quick-answers-btn">Quick Answers ▾</button>
+              <button class="send-btn">↑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="window-note">
+      <h3>Hatch on response background</h3>
+      <p>The scrollable text area gets the hatch — same vocabulary as the card, applied to the prose surface. A small <strong>LIKELY + Forecast</strong> label sits at the very top of the text, anchoring the treatment.</p>
+      <p>The hatch is at lower opacity than the card (~3% stroke alpha vs ~6%) so body text stays fully readable. The treatment is persistent — it doesn't scroll away.</p>
+      <p><strong>Works well when:</strong> the entire response is a forecast. Clearly different from a standard response at a glance.</p>
+      <p><strong>Watch out for:</strong> long responses where the hatch becomes fatiguing. Could reduce opacity further on scroll depth.</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     B — Header band, clean body
+═══════════════════════════════════════════ -->
+<div class="variant" id="vb">
+  <div class="window-wrap">
+    <div class="ca-window treat-b">
+      <div class="ca-topbar">
+        <svg class="ca-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#888" stroke-width="1.2"/><path d="M6 9h6M9 6v6" stroke="#888" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span class="ca-title">Co-Analyst</span>
+        <div class="ca-info">i</div>
+        <div class="ca-controls"><span>＋</span><span>−</span><span>✕</span></div>
+      </div>
+      <div class="ca-body-wrap">
+        <div class="ca-sidebar">
+          <span class="sidebar-icon">🔖</span>
+          <span class="sidebar-icon">✏️</span>
+        </div>
+        <div class="ca-main">
+          <div class="user-prompt">If Israel invades Lebanon, what actions will Iran take and how likely is direct military intervention?</div>
+          <div class="pagination-row">
+            <div class="pag-arrows">
+              <span class="pag-arrow">‹</span>
+              <span class="pag-count">1/3</span>
+              <span class="pag-arrow">›</span>
+            </div>
+            <span class="pag-sep">|</span>
+            <span>Quick Answers</span>
+            <span class="pag-sep">|</span>
+            <span>Default</span>
+          </div>
+
+          <!-- Hatched header band -->
+          <div class="forecast-header-band">
+            <span class="badge badge-likely">
+              <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4.5" stroke="#111" stroke-width="1"/><path d="M5 3v2.5" stroke="#111" stroke-width="1.2" stroke-linecap="round"/><circle cx="5" cy="7" r="0.6" fill="#111"/></svg>
+              Likely
+            </span>
+            <span class="badge-forecast-tag">Forecast response</span>
+            <span class="pred-date" style="margin-left:auto;">Current indicators</span>
+          </div>
+
+          <!-- Clean response body -->
+          <div class="response-area">
+            <div class="response-text">
+              <p>If Israel invades Lebanon, several indicators suggest that Iran will take <strong>significant actions</strong>. Multiple sources indicate that Iran has explicitly warned of direct intervention if Israel attacks Lebanon.<span class="cite">1 2 3 4 5</span> This is reinforced by statements from Iranian officials and affiliated groups.</p>
+              <p>Iran's potential actions could include direct military intervention or support for its proxies. Hezbollah is expected to escalate its aggression against Israel in response to an invasion.<span class="cite">10 11 12 13 14</span> This is consistent with Iran's strategy of using proxy forces to exert influence.</p>
+              <p>Additionally, Iran has reportedly prepared for a broader regional conflict, indicating readiness to engage in a multi-front war involving its allies in Syria, Iraq, and Yemen.<span class="cite">15 18 19 20</span></p>
+              <p>The likelihood of indirect action is <strong>almost certain</strong>, while direct action is a <strong>realistic possibility to likely</strong>, depending on the evolution of the conflict and the crossing of Iranian red lines.</p>
+            </div>
+          </div>
+
+          <div class="response-toolbar">
+            <button class="toolbar-btn font">Aa</button>
+            <button class="toolbar-btn">⧉</button>
+            <button class="toolbar-btn">◎</button>
+            <button class="toolbar-btn">↻</button>
+          </div>
+          <div class="ca-input-area">
+            <div><span class="forecast-tag">Forecast <span class="x">×</span></span></div>
+            <div class="input-placeholder">Describe what you would like to summarise…</div>
+            <div class="input-bar">
+              <div class="input-actions">
+                <span>@</span><span>📎</span>
+                <span class="input-mode">Default</span>
+              </div>
+              <button class="quick-answers-btn">Quick Answers ▾</button>
+              <button class="send-btn">↑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="window-note">
+      <h3>Header band, clean body</h3>
+      <p>The hatch is concentrated in a <strong>dedicated band</strong> between the pagination row and the response text. Body text stays completely clean — no texture interference, maximum readability.</p>
+      <p>The band carries the LIKELY badge and context label, so the analyst registers "this is a forecast" before reading a single word of the response.</p>
+      <p><strong>Works well when:</strong> readability of a long prose response is the priority. The band acts like a page header — seen once, then the reader moves past it.</p>
+      <p><strong>Watch out for:</strong> the treatment fades from awareness quickly on long responses. Consider whether a persistent indicator is needed (e.g. the left rail alongside this).</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     C — Left rail
+═══════════════════════════════════════════ -->
+<div class="variant" id="vc">
+  <div class="window-wrap">
+    <div class="ca-window treat-c">
+      <div class="ca-topbar">
+        <svg class="ca-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#888" stroke-width="1.2"/><path d="M6 9h6M9 6v6" stroke="#888" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span class="ca-title">Co-Analyst</span>
+        <div class="ca-info">i</div>
+        <div class="ca-controls"><span>＋</span><span>−</span><span>✕</span></div>
+      </div>
+      <div class="ca-body-wrap">
+        <div class="ca-sidebar">
+          <span class="sidebar-icon">🔖</span>
+          <span class="sidebar-icon">✏️</span>
+        </div>
+        <div class="ca-main">
+          <div class="user-prompt">If Israel invades Lebanon, what actions will Iran take and how likely is direct military intervention?</div>
+          <div class="pagination-row">
+            <div class="pag-arrows">
+              <span class="pag-arrow">‹</span>
+              <span class="pag-count">1/3</span>
+              <span class="pag-arrow">›</span>
+            </div>
+            <span class="pag-sep">|</span>
+            <span>Quick Answers</span>
+            <span class="pag-sep">|</span>
+            <span>Default</span>
+          </div>
+
+          <div class="response-area" style="position:relative; padding-left: 24px;">
+            <div class="forecast-rail"></div>
+            <div class="inner">
+              <div class="forecast-label-inline">
+                <span class="badge badge-likely" style="font-size:9px;">
+                  <svg width="7" height="7" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4.5" stroke="#111" stroke-width="1"/><path d="M5 3v2.5" stroke="#111" stroke-width="1.2" stroke-linecap="round"/><circle cx="5" cy="7" r="0.6" fill="#111"/></svg>
+                  Likely
+                </span>
+                <span class="badge-forecast-tag">Forecast</span>
+              </div>
+              <div class="response-text">
+                <p>If Israel invades Lebanon, several indicators suggest that Iran will take <strong>significant actions</strong>. Multiple sources indicate that Iran has explicitly warned of direct intervention if Israel attacks Lebanon.<span class="cite">1 2 3 4 5</span> This is reinforced by statements from Iranian officials and affiliated groups.</p>
+                <p>Iran's potential actions could include direct military intervention or support for its proxies. Hezbollah is expected to escalate its aggression against Israel in response to an invasion.<span class="cite">10 11 12 13 14</span> This is consistent with Iran's strategy of using proxy forces to exert influence.</p>
+                <p>Additionally, Iran has reportedly prepared for a broader regional conflict, indicating readiness to engage in a multi-front war involving its allies in Syria, Iraq, and Yemen.<span class="cite">15 18 19 20</span></p>
+                <p>The likelihood of indirect action is <strong>almost certain</strong>, while direct action is a <strong>realistic possibility to likely</strong>, depending on the evolution of the conflict and the crossing of Iranian red lines.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="response-toolbar">
+            <button class="toolbar-btn font">Aa</button>
+            <button class="toolbar-btn">⧉</button>
+            <button class="toolbar-btn">◎</button>
+            <button class="toolbar-btn">↻</button>
+          </div>
+          <div class="ca-input-area">
+            <div><span class="forecast-tag">Forecast <span class="x">×</span></span></div>
+            <div class="input-placeholder">Describe what you would like to summarise…</div>
+            <div class="input-bar">
+              <div class="input-actions">
+                <span>@</span><span>📎</span>
+                <span class="input-mode">Default</span>
+              </div>
+              <button class="quick-answers-btn">Quick Answers ▾</button>
+              <button class="send-btn">↑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="window-note">
+      <h3>Left rail</h3>
+      <p>A <strong>3px hatched rail</strong> runs the full height of the response, flush with the left edge of the text. It's always in peripheral vision regardless of scroll depth — the analyst never loses the "this is projected" signal.</p>
+      <p>Minimal footprint: no background change, no texture over the text, just the rail and a small label at the top.</p>
+      <p><strong>Works well when:</strong> you want a persistent but unobtrusive signal. Combines cleanly with B (header band) for a two-layer treatment.</p>
+      <p><strong>Watch out for:</strong> the rail is subtle. If the analyst is skimming fast it might not register. Worth testing whether it needs to be slightly wider or use a brighter accent.</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     D — Inline paragraph treatment
+     Only probability-bearing sentences
+     are lifted into hatched callouts
+═══════════════════════════════════════════ -->
+<div class="variant" id="vd">
+  <div class="window-wrap">
+    <div class="ca-window">
+      <div class="ca-topbar">
+        <svg class="ca-icon" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#888" stroke-width="1.2"/><path d="M6 9h6M9 6v6" stroke="#888" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span class="ca-title">Co-Analyst</span>
+        <div class="ca-info">i</div>
+        <div class="ca-controls"><span>＋</span><span>−</span><span>✕</span></div>
+      </div>
+      <div class="ca-body-wrap">
+        <div class="ca-sidebar">
+          <span class="sidebar-icon">🔖</span>
+          <span class="sidebar-icon">✏️</span>
+        </div>
+        <div class="ca-main">
+          <div class="user-prompt">If Israel invades Lebanon, what actions will Iran take and how likely is direct military intervention?</div>
+          <div class="pagination-row">
+            <div class="pag-arrows">
+              <span class="pag-arrow">‹</span>
+              <span class="pag-count">1/3</span>
+              <span class="pag-arrow">›</span>
+            </div>
+            <span class="pag-sep">|</span>
+            <span>Quick Answers</span>
+            <span class="pag-sep">|</span>
+            <span>Default</span>
+          </div>
+
+          <div class="response-area">
+            <div class="response-text">
+              <p>If Israel invades Lebanon, multiple sources indicate Iran has explicitly warned of direct intervention.<span class="cite">1 2 3 4 5</span> Statements from Iranian officials and affiliated groups reinforce this, describing an Israeli invasion as a red line requiring a response.<span class="cite">6 7 8 9</span></p>
+
+              <!-- Hatched forecast paragraph -->
+              <div class="forecast-para">
+                <div class="forecast-para-label">
+                  <span class="badge badge-likely" style="font-size:9px;">
+                    <svg width="7" height="7" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4.5" stroke="#111" stroke-width="1"/><path d="M5 3v2.5" stroke="#111" stroke-width="1.2" stroke-linecap="round"/><circle cx="5" cy="7" r="0.6" fill="#111"/></svg>
+                    Likely
+                  </span>
+                  <span class="badge-forecast-tag">Projected</span>
+                </div>
+                Iran's most probable response is proxy escalation via Hezbollah, with a <strong>likely (65–75%) probability</strong> of sustained cross-border operations from Lebanon within 48–72 hours of any ground incursion. Direct Iranian military action carries a <strong>realistic possibility (35–50%)</strong>, contingent on the scale of Israeli advance and whether declared red lines are crossed.
+              </div>
+
+              <p>Iran has reportedly prepared for a broader regional conflict, with readiness indicators from Syria, Iraq, and Yemen-based allied forces.<span class="cite">15 18 19 20</span> The U.S. has separately warned Israel that an invasion could compel Iranian intervention — underscoring the international dimension.<span class="cite">2 5 8 9</span></p>
+
+              <!-- Second hatched forecast paragraph -->
+              <div class="forecast-para">
+                <div class="forecast-para-label">
+                  <span class="badge badge-possible" style="font-size:9px;">Possible</span>
+                  <span class="badge-forecast-tag">Contingent</span>
+                </div>
+                If Israeli ground forces advance beyond the Litani River, the probability of direct Iranian missile or drone strikes on Israeli territory increases to <strong>likely (60–70%)</strong>. This threshold has been referenced in IRGC communications intercepted in the past 30 days.<span class="cite">11 12</span>
+              </div>
+
+              <p>Primary indicators to monitor: proxy mobilisation rates, IRGC advisory presence shifts, and official Iranian escalatory rhetoric crossing from conditional to unconditional framing.</p>
+            </div>
+          </div>
+
+          <div class="response-toolbar">
+            <button class="toolbar-btn font">Aa</button>
+            <button class="toolbar-btn">⧉</button>
+            <button class="toolbar-btn">◎</button>
+            <button class="toolbar-btn">↻</button>
+          </div>
+          <div class="ca-input-area">
+            <div><span class="forecast-tag">Forecast <span class="x">×</span></span></div>
+            <div class="input-placeholder">Describe what you would like to summarise…</div>
+            <div class="input-bar">
+              <div class="input-actions">
+                <span>@</span><span>📎</span>
+                <span class="input-mode">Default</span>
+              </div>
+              <button class="quick-answers-btn">Quick Answers ▾</button>
+              <button class="send-btn">↑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="window-note">
+      <h3>Inline paragraph callout</h3>
+      <p>Only the <strong>probability-bearing passages</strong> get the hatch treatment — lifted into a styled callout block. The surrounding confirmed/analytical prose stays clean.</p>
+      <p>This is the most granular approach and the most honest — it distinguishes "here is what happened" from "here is what we project" at the sentence level rather than labelling the whole response.</p>
+      <p><strong>Works well when:</strong> CA mixes confirmed analysis with forecasts in a single response. Lets the analyst immediately identify which claims are projections without re-reading.</p>
+      <p><strong>Watch out for:</strong> requires CA to identify which sentences are forecast-specific. That's an inference task — ensure the model can reliably tag its own probabilistic statements.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('v' + id).classList.add('active');
+  const idx = ['a','b','c','d'].indexOf(id);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+}
+</script>
+</body>
+</html>

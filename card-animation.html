@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Animation</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1a18;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    padding: 60px 24px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #44443f;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  /* ── Interactive demo ───────────────────────── */
+  .demo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .card-wrap {
+    position: relative;
+    width: 600px;
+    height: 62px;
+    cursor: pointer;
+  }
+
+  .card-wrap .layer {
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-wrap .layer img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .layer-normal { opacity: 1; }
+  .layer-hover  { opacity: 0; }
+
+  .card-wrap:hover .layer-normal { opacity: 0; }
+  .card-wrap:hover .layer-hover  { opacity: 1; }
+
+  .stroke-anim {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.5;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-wrap:hover .stroke-anim {
+    opacity: 1;
+  }
+
+  /* ── Stacked static comparison ──────────────── */
+  .compare {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .static-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .static-card img {
+    width: 600px;
+    height: 62px;
+    display: block;
+  }
+
+  .divider {
+    width: 600px;
+    height: 1px;
+    background: #2a2a27;
+  }
+
+  .title {
+    font-size: 11px;
+    font-weight: 500;
+    color: #36362f;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="demo">
+  <div class="label">hover the card</div>
+  <div class="card-wrap">
+    <div class="layer layer-normal">
+      <img src="NormalNoStroke.svg" alt="Default state">
+    </div>
+    <div class="layer layer-hover">
+      <img src="HoverNoStroke.svg" alt="Hover state">
+    </div>
+
+    <!-- animated border stroke overlay -->
+    <svg class="stroke-anim" viewBox="0 0 600 62" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- exact copies of Normal.svg paint1/paint2 — same gradient shape used throughout -->
+        <radialGradient id="rg-a" cx="0" cy="0" r="1"
+          gradientTransform="matrix(253.735 131.373 -15.0926 35.7309 0 6.84017)"
+          gradientUnits="userSpaceOnUse">
+          <stop stop-color="white"/>
+          <stop offset="1" stop-color="#414141" stop-opacity="0.3"/>
+        </radialGradient>
+        <radialGradient id="rg-b" cx="0" cy="0" r="1"
+          gradientTransform="matrix(-281.442 103.273 -13.969 -46.6632 545.883 0)"
+          gradientUnits="userSpaceOnUse">
+          <stop stop-color="white"/>
+          <stop offset="1" stop-color="#414141" stop-opacity="0.3"/>
+        </radialGradient>
+      </defs>
+      <path fill="none" stroke="url(#rg-a)" stroke-width="1"
+        d="M15 0.5H585C593.008 0.5 599.5 6.99187 599.5 15V47C599.5 55.0081 593.008 61.5 585 61.5H15C6.99187 61.5 0.5 55.0081 0.5 47V15C0.5 6.99187 6.99187 0.5 15 0.5Z"/>
+      <path fill="none" stroke="url(#rg-b)" stroke-width="1"
+        d="M15 0.5H585C593.008 0.5 599.5 6.99187 599.5 15V47C599.5 55.0081 593.008 61.5 585 61.5H15C6.99187 61.5 0.5 55.0081 0.5 47V15C0.5 6.99187 6.99187 0.5 15 0.5Z"/>
+    </svg>
+  </div>
+</div>
+
+<div>
+  <p class="title">States</p>
+  <div class="compare">
+    <div class="static-card">
+      <div class="label">Normal</div>
+      <img src="Normal.svg" alt="Normal state">
+    </div>
+    <div class="divider"></div>
+    <div class="static-card">
+      <div class="label">Hover</div>
+      <img src="Hover.svg" alt="Hover state">
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

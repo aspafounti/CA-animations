@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forecast — CA Response Styling</title>
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #181818;
+    --surface-2: #202020;
+    --surface-3: #252525;
+    --border: #2c2c2c;
+    --border-2: #333;
+    --text-primary: #e8e8e8;
+    --text-secondary: #888;
+    --text-muted: #555;
+    --yellow: #f5d00a;
+
+    /* Hatch — matches card screenshot */
+    --hatch: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M-1,1 l2,-2 M0,12 l12,-12 M11,13 l2,-2' stroke='rgba(255,255,255,0.055)' stroke-width='1'/%3E%3C/svg%3E");
+    --hatch-subtle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M-1,1 l2,-2 M0,12 l12,-12 M11,13 l2,-2' stroke='rgba(255,255,255,0.032)' stroke-width='1'/%3E%3C/svg%3E");
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .page { max-width: 740px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* ── Page nav ── */
+  .nav {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 40px;
+  }
+  .nav a {
+    font-size: 12px; color: var(--text-muted); text-decoration: none;
+    padding: 5px 0; border-bottom: 1px solid transparent;
+    transition: color 0.15s;
+  }
+  .nav a:hover { color: var(--text-secondary); }
+  .nav a.active { color: var(--text-primary); border-bottom-color: var(--yellow); }
+  .nav-sep { color: var(--text-muted); font-size: 10px; }
+
+  /* ── Section label ── */
+  .section { margin-bottom: 48px; }
+  .section-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--text-muted); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .section-note {
+    font-size: 11px; color: var(--text-muted); margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  /* ─────────────────────────────────────
+     SHARED BADGE COMPONENTS
+  ───────────────────────────────────── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; border-radius: 4px;
+    padding: 3px 7px; line-height: 1;
+  }
+  .badge-likely {
+    background: #fff; color: #111;
+  }
+  .badge-high {
+    background: #fff; color: #111;
+  }
+  .badge-possible {
+    background: #2a2a2a; color: #aaa; border: 1px solid #3a3a3a;
+  }
+  .badge svg { flex-shrink: 0; }
+
+  .predicted-date {
+    display: inline-flex; align-items: center;
+    font-size: 11px; color: var(--text-secondary);
+    background: rgba(255,255,255,0.06); border-radius: 4px;
+    padding: 3px 8px;
+  }
+
+  /* ─────────────────────────────────────
+     OPTION A — Full forecast response
+     Same hatch as card, applied to the
+     entire response block
+  ───────────────────────────────────── */
+  .response-full {
+    border-radius: 10px;
+    border: 1px solid #363636;
+    background-color: var(--surface);
+    background-image: var(--hatch);
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .response-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 12px; flex-wrap: wrap;
+  }
+
+  .response-title {
+    font-size: 14px; font-weight: 650;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin-bottom: 10px; line-height: 1.35;
+  }
+
+  .response-body {
+    font-size: 12.5px; color: var(--text-secondary);
+    line-height: 1.65; margin-bottom: 14px;
+  }
+  .response-body p + p { margin-top: 10px; }
+  .response-body strong { color: var(--text-primary); font-weight: 600; }
+
+  .response-divider {
+    height: 1px; background: rgba(255,255,255,0.07);
+    margin: 14px 0;
+  }
+
+  .response-meta {
+    display: flex; flex-wrap: wrap; gap: 16px;
+  }
+  .meta-item { }
+  .meta-label { font-size: 10px; color: var(--text-muted); margin-bottom: 2px; }
+  .meta-value { font-size: 12px; color: var(--text-secondary); }
+
+  /* ─────────────────────────────────────
+     OPTION B — Mixed response
+     Regular CA response with a hatched
+     forecast section embedded within it
+  ───────────────────────────────────── */
+  .response-mixed {
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .mixed-body {
+    padding: 18px 20px;
+  }
+
+  .mixed-forecast-block {
+    background-color: var(--surface-2);
+    background-image: var(--hatch);
+    border-top: 1px solid #363636;
+    border-bottom: 1px solid #363636;
+    padding: 16px 20px;
+  }
+
+  .mixed-footer {
+    padding: 14px 20px;
+    background: var(--surface);
+  }
+
+  /* Probability inline pill */
+  .prob-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 3px; padding: 1px 6px;
+    font-size: 11px; font-weight: 600; color: var(--text-primary);
+    vertical-align: baseline; white-space: nowrap;
+  }
+
+  /* ─────────────────────────────────────
+     OPTION C — Inline forecast callout
+     Forecast statements within flowing
+     text get a hatched highlight treatment
+  ───────────────────────────────────── */
+  .response-prose {
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 18px 20px;
+  }
+
+  .prose-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-muted); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .prose-text {
+    font-size: 12.5px; color: var(--text-secondary); line-height: 1.7;
+  }
+  .prose-text strong { color: var(--text-primary); font-weight: 600; }
+  .prose-text p + p { margin-top: 10px; }
+
+  .forecast-callout {
+    background-color: var(--surface-2);
+    background-image: var(--hatch);
+    border: 1px solid #3a3a3a;
+    border-left: 2px solid #555;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 12px 0;
+    position: relative;
+  }
+  .callout-header {
+    display: flex; align-items: center; gap: 7px;
+    margin-bottom: 8px;
+  }
+  .callout-text {
+    font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+  }
+  .callout-text strong { color: var(--text-primary); }
+
+  /* ─────────────────────────────────────
+     OPTION D — Confidence-tiered
+     Hatch density / opacity varies with
+     confidence level
+  ───────────────────────────────────── */
+  .conf-row {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+
+  .conf-card {
+    border-radius: 8px;
+    border: 1px solid #363636;
+    padding: 14px 16px;
+    position: relative; overflow: hidden;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .conf-card-body { flex: 1; }
+  .conf-card-title {
+    font-size: 12.5px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .conf-card-text {
+    font-size: 11.5px; color: var(--text-secondary); line-height: 1.55;
+  }
+  .conf-card-badge {
+    flex-shrink: 0; margin-top: 1px;
+  }
+
+  /* Dense hatch = lower confidence */
+  .conf-almost-certain {
+    background-color: var(--surface);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Cpath d='M-1,1 l2,-2 M0,14 l14,-14 M13,15 l2,-2' stroke='rgba(255,255,255,0.04)' stroke-width='1'/%3E%3C/svg%3E");
+  }
+  .conf-likely {
+    background-color: var(--surface);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M-1,1 l2,-2 M0,10 l10,-10 M9,11 l2,-2' stroke='rgba(255,255,255,0.055)' stroke-width='1'/%3E%3C/svg%3E");
+  }
+  .conf-possible {
+    background-color: var(--surface);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7'%3E%3Cpath d='M-1,1 l2,-2 M0,7 l7,-7 M6,8 l2,-2' stroke='rgba(255,255,255,0.07)' stroke-width='1'/%3E%3C/svg%3E");
+  }
+
+  .conf-bar {
+    width: 3px; border-radius: 2px; align-self: stretch; flex-shrink: 0;
+  }
+  .bar-certain { background: #666; }
+  .bar-likely  { background: #888; }
+  .bar-possible { background: #444; }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex; gap: 2px; margin-bottom: 32px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 3px;
+  }
+  .tab {
+    flex: 1; padding: 7px 10px; font-size: 11px; font-weight: 500;
+    color: var(--text-muted); border-radius: 6px; cursor: pointer;
+    background: none; border: none; transition: all 0.15s;
+    text-align: center;
+  }
+  .tab:hover { color: var(--text-secondary); }
+  .tab.active { background: var(--surface-3); color: var(--text-primary); }
+
+  .variant { display: none; }
+  .variant.active { display: block; }
+
+  /* ── CA chrome shell ── */
+  .ca-shell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .ca-topbar {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ca-avatar {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, #333 0%, #222 100%);
+    border: 1px solid #3a3a3a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #666;
+  }
+  .ca-name { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+  .ca-timestamp { font-size: 10px; color: var(--text-muted); margin-left: auto; }
+  .ca-body { padding: 0; }
+
+  /* location row */
+  .loc-row {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+  .loc-icon { color: var(--text-muted); font-size: 13px; line-height: 1; }
+
+  /* source chips */
+  .source-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .source-chip {
+    font-size: 10px; color: var(--text-muted);
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    border-radius: 3px; padding: 2px 6px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="nav">
+    <a href="index.html">Concepts overview</a>
+    <span class="nav-sep">›</span>
+    <a href="response.html" class="active">CA response styling</a>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="show('a')">A · Full forecast response</button>
+    <button class="tab" onclick="show('b')">B · Mixed response</button>
+    <button class="tab" onclick="show('c')">C · Inline callout</button>
+    <button class="tab" onclick="show('d')">D · Confidence tiers</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       A — Full forecast response
+       The whole response is a forecast; hatch
+       applied to entire response block
+  ═══════════════════════════════════════════ -->
+  <div class="variant active" id="va">
+    <div class="section-note">
+      When CA's entire response is a forecast — no confirmed/factual mix. Same hatch vocabulary as the card, adapted for a longer text block.
+    </div>
+
+    <div class="ca-shell">
+      <div class="ca-topbar">
+        <div class="ca-avatar">CA</div>
+        <div class="ca-name">Co-Analyst</div>
+        <div class="ca-timestamp">14:03 · Forecast response</div>
+      </div>
+      <div class="ca-body">
+        <div class="response-full">
+          <!-- Header row -->
+          <div class="response-header">
+            <span class="badge badge-likely">
+              <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4.5" stroke="#111" stroke-width="1"/><path d="M5 3v2.5" stroke="#111" stroke-width="1.2" stroke-linecap="round"/><circle cx="5" cy="7" r="0.6" fill="#111"/></svg>
+              Likely
+            </span>
+            <span class="predicted-date">Predicted: 12–19 Jun 2025</span>
+          </div>
+
+          <!-- Title -->
+          <div class="response-title">Escalation of cross-border shelling,<br>Eastern sector — Zaporizhzhia axis</div>
+
+          <!-- Location -->
+          <div class="loc-row">
+            <span class="loc-icon">⊕</span>
+            Zaporizhzhia Oblast, Ukraine
+          </div>
+
+          <!-- Body -->
+          <div class="response-body">
+            <p>Based on current force posture, artillery repositioning observed over the past 96 hours, and the historical precedent set during the April escalation cycle, there is a <strong>likely (65–75%) probability</strong> of a sustained increase in cross-border artillery exchanges within the next 72 hours.</p>
+            <p>Russian forces have consolidated reinforced positions along the Orikhiv–Robotyne line consistent with pre-offensive staging patterns. Concurrently, Ukrainian air defence assets have been observed relocating northward, suggesting anticipation of increased strike tempo.</p>
+          </div>
+
+          <div class="response-divider"></div>
+
+          <!-- Meta footer -->
+          <div class="response-meta">
+            <div class="meta-item">
+              <div class="meta-label">Confidence basis</div>
+              <div class="meta-value">OSINT, SIGINT pattern matching, historical</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Data source alignment</div>
+              <div class="meta-value">Pro-Kremlin, Neutral, UA Official</div>
+            </div>
+          </div>
+
+          <!-- Source chips -->
+          <div class="source-chips" style="margin-top:12px;">
+            <span class="source-chip">DeepState Map</span>
+            <span class="source-chip">ISW 08 Jun</span>
+            <span class="source-chip">@front_line_ua</span>
+            <span class="source-chip">+4 sources</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       B — Mixed response
+       CA responds with analysis + an embedded
+       forecast block — hatch only on the
+       forecast section
+  ═══════════════════════════════════════════ -->
+  <div class="variant" id="vb">
+    <div class="section-note">
+      When a CA response contains both confirmed analysis and a forecast section. The hatch is scoped to just the forecast block — confirmed content stays clean.
+    </div>
+
+    <div class="ca-shell">
+      <div class="ca-topbar">
+        <div class="ca-avatar">CA</div>
+        <div class="ca-name">Co-Analyst</div>
+        <div class="ca-timestamp">14:03 · Analysis + Forecast</div>
+      </div>
+      <div class="ca-body">
+        <div class="response-mixed">
+
+          <!-- Clean confirmed analysis section -->
+          <div class="mixed-body">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:12px;">Analysis</div>
+            <div class="response-body">
+              <p>Over the past 30 days, <strong>147 confirmed incidents</strong> were recorded along the Zaporizhzhia contact line — a 23% increase from the previous cycle. The majority occurred in a 40km corridor centred on Orikhiv, consistent with ongoing attritional pressure.</p>
+              <p>Russian force composition in the sector has shifted. The 58th Combined Arms Army has rotated approximately 30% of its line units, with fresh mechanised battalions observed moving into forward staging areas via satellite imagery dated 6 Jun.</p>
+            </div>
+          </div>
+
+          <!-- Hatched forecast section -->
+          <div class="mixed-forecast-block">
+            <div class="response-header" style="margin-bottom:10px;">
+              <span class="badge badge-likely">
+                <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4.5" stroke="#111" stroke-width="1"/><path d="M5 3v2.5" stroke="#111" stroke-width="1.2" stroke-linecap="round"/><circle cx="5" cy="7" r="0.6" fill="#111"/></svg>
+                Likely
+              </span>
+              <span style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);">Forecast · 72h window</span>
+              <span class="predicted-date" style="margin-left:auto;">Jun 12–14</span>
+            </div>
+            <div class="response-body" style="margin-bottom:10px;">
+              <p>The rotation pattern and staging activity suggest a <strong>likely (65–75%)</strong> probability of a coordinated artillery surge targeting Ukrainian defensive positions north of Robotyne. A secondary axis toward Huliaipole carries a <strong>realistic possibility (35–45%)</strong> contingent on Ukrainian redeployment.</p>
+            </div>
+            <div class="response-meta">
+              <div class="meta-item">
+                <div class="meta-label">Confidence basis</div>
+                <div class="meta-value">Pattern matching · Historical precedent</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clean footer -->
+          <div class="mixed-footer">
+            <div class="source-chips">
+              <span class="source-chip">ISW 08 Jun</span>
+              <span class="source-chip">Maxar imagery 06 Jun</span>
+              <span class="source-chip">DeepState</span>
+              <span class="source-chip">+6 sources</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       C — Inline callout
+       Flowing prose response; forecast
+       statements pulled into hatched callout
+       blocks within the text
+  ═══════════════════════════════════════════ -->
+  <div class="variant" id="vc">
+    <div class="section-note">
+      For longer analytical responses where forecast statements are interspersed with confirmed analysis. Forecast passages are lifted into hatched callout blocks that break the prose flow.
+    </div>
+
+    <div class="ca-shell">
+      <div class="ca-topbar">
+        <div class="ca-avatar">CA</div>
+        <div class="ca-name">Co-Analyst</div>
+        <div class="ca-timestamp">14:03</div>
+      </div>
+      <div class="ca-body">
+        <div class="response-prose">
+          <div class="prose-label">
+            <svg width="14" height="7" viewBox="0 0 18 9"><path d="M1,6.5 C3,6.5 3,2.5 6,2.5 C9,2.5 9,6.5 12,6.5 C15,6.5 15,2.5 17,2.5" stroke="#555" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+            Forecast analysis · Moldova electoral interference
+          </div>
+
+          <div class="prose-text">
+            <p>Coordinated inauthentic behaviour targeting the Moldovan electoral cycle has been confirmed across at least <strong>three major social platforms</strong> since late April. Network analysis indicates a hub-and-spoke amplification structure consistent with previous Russian information operations in the Western Balkans (2022) and Georgia (2024).</p>
+
+            <!-- Inline forecast callout -->
+            <div class="forecast-callout">
+              <div class="callout-header">
+                <span class="badge badge-likely" style="font-size:9px;padding:2px 6px;">
+                  <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4.5" stroke="#111" stroke-width="1"/><path d="M5 3v2.5" stroke="#111" stroke-width="1.2" stroke-linecap="round"/><circle cx="5" cy="7" r="0.6" fill="#111"/></svg>
+                  Likely
+                </span>
+                <span style="font-size:10px;color:var(--text-muted);">Predicted: 2–4 weeks pre-election</span>
+              </div>
+              <div class="callout-text">
+                There is a <strong>likely (70–80%) probability</strong> of a coordinated narrative surge targeting incumbent legitimacy in the final four weeks of the campaign, drawing on fabricated evidence of electoral fraud. This pattern mirrors the Moldova 2023 playbook and the Georgian pre-election cycle.
+              </div>
+            </div>
+
+            <p>Current platform-level takedown rates suggest detection lag of <strong>approximately 72–96 hours</strong>, which is sufficient for high-engagement narrative seeding before removal. Cross-referencing with OSINT tracking of known amplifier accounts indicates 14 of 22 previously identified nodes remain active.</p>
+
+            <!-- Second inline forecast callout -->
+            <div class="forecast-callout">
+              <div class="callout-header">
+                <span class="badge badge-possible" style="font-size:9px;padding:2px 6px;">Possible</span>
+                <span style="font-size:10px;color:var(--text-muted);">Contingent on platform response</span>
+              </div>
+              <div class="callout-text">
+                A <strong>realistic possibility (30–45%)</strong> exists that physical-world coordination events (rallies, leafleting) will accompany the digital operation in Chișinău and Bălți, as occurred in the October 2023 cycle. This would indicate higher operational investment and external financial support.
+              </div>
+            </div>
+
+            <p>Monitoring priority should be placed on the identified amplifier accounts and any new network clusters emerging in the Transnistrian information space, which has historically served as an operational staging environment.</p>
+          </div>
+
+          <div class="response-divider"></div>
+          <div class="source-chips">
+            <span class="source-chip">DFRLab · May 2025</span>
+            <span class="source-chip">EU DisinfoLab</span>
+            <span class="source-chip">OSCE monitoring</span>
+            <span class="source-chip">+9 sources</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       D — Confidence tiers
+       Hatch density signals confidence level:
+       sparse = high confidence, dense = speculative
+  ═══════════════════════════════════════════ -->
+  <div class="variant" id="vd">
+    <div class="section-note">
+      Hatch density encodes confidence. Sparse lines = high confidence projection. Dense lines = lower confidence / speculative. Works as a standalone visual language for forecast feeds.
+    </div>
+
+    <div class="ca-shell">
+      <div class="ca-topbar">
+        <div class="ca-avatar">CA</div>
+        <div class="ca-name">Co-Analyst</div>
+        <div class="ca-timestamp">Forecast feed · Moldova</div>
+      </div>
+      <div class="ca-body" style="padding:12px 14px;">
+        <div class="conf-row">
+
+          <div class="conf-card conf-almost-certain">
+            <div class="conf-bar bar-certain"></div>
+            <div class="conf-card-body">
+              <div class="conf-card-title">Continued information operation activity</div>
+              <div class="conf-card-text">Sustained amplification via existing network infrastructure is <strong>almost certain (90%+)</strong> to continue through the pre-election period given active node count and sunk cost of operation.</div>
+            </div>
+            <div class="conf-card-badge">
+              <span class="badge" style="background:#555;color:#e8e8e8;font-size:9px;">Almost Certain</span>
+            </div>
+          </div>
+
+          <div class="conf-card conf-likely">
+            <div class="conf-bar bar-likely"></div>
+            <div class="conf-card-body">
+              <div class="conf-card-title">Coordinated narrative surge, final 4 weeks</div>
+              <div class="conf-card-text">A concentrated narrative push targeting incumbent legitimacy is <strong>likely (65–75%)</strong> based on historical campaign-phase timing and current network readiness indicators.</div>
+            </div>
+            <div class="conf-card-badge">
+              <span class="badge badge-likely" style="font-size:9px;">Likely</span>
+            </div>
+          </div>
+
+          <div class="conf-card conf-possible">
+            <div class="conf-bar bar-possible"></div>
+            <div class="conf-card-body">
+              <div class="conf-card-title">Physical coordination events in Chișinău</div>
+              <div class="conf-card-text">Parallel physical-world events (rallies, leafleting) represent a <strong>realistic possibility (30–45%)</strong>, contingent on evidence of higher external financial support and a platform crackdown forcing alternative amplification channels.</div>
+            </div>
+            <div class="conf-card-badge">
+              <span class="badge badge-possible" style="font-size:9px;">Possible</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;font-size:11px;color:var(--text-muted);line-height:1.6;padding:0 2px;">
+      <strong style="color:var(--text-secondary);">Reading the density:</strong> the sparser the hatch, the stronger the confidence basis. Dense hatching signals the projection relies more heavily on pattern-matching than direct evidence — not a weakness, but a cue for the analyst to apply additional scrutiny.
+    </div>
+  </div>
+
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('v' + id).classList.add('active');
+  const idx = ['a','b','c','d'].indexOf(id);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+}
+</script>
+</body>
+</html>

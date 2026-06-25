@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "forecast-concepts",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "7823", "--directory", "forecast-concepts"],
+      "port": 7823
+    },
+    {
+      "name": "card-animation.html",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "7824", "--directory", "/Users/aspa.founti/Claude"],
+      "port": 7824
+    }
+  ]
+}

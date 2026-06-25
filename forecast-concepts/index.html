@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forecasting — Visual Treatment Concepts</title>
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #1a1a1a;
+    --surface-2: #222222;
+    --border: #2e2e2e;
+    --text-primary: #f0f0f0;
+    --text-secondary: #888;
+    --text-muted: #555;
+    --yellow: #f5d00a;
+    --yellow-dim: rgba(245, 208, 10, 0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  .page { max-width: 1100px; margin: 0 auto; padding: 48px 32px 80px; }
+
+  .page-header { margin-bottom: 56px; }
+  .page-header h1 { font-size: 18px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.02em; }
+  .page-header p { color: var(--text-secondary); margin-top: 6px; font-size: 12px; }
+
+  .concept { margin-bottom: 64px; }
+  .concept-label {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+  }
+  .concept-label .num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--surface-2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--text-secondary); flex-shrink: 0;
+  }
+  .concept-label h2 { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .concept-label span { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+  .divider { height: 1px; background: var(--border); margin-bottom: 24px; }
+
+  /* ── Shortcut cards row ── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .card:hover { border-color: #444; }
+
+  .card-icon {
+    width: 30px; height: 30px; border-radius: 7px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+  .card h3 { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+  .card p { font-size: 11px; color: var(--text-secondary); line-height: 1.45; }
+
+  /* ── Also show: inline response chip + stream card mini ── */
+  .also-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .response-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    position: relative; overflow: hidden;
+  }
+  .chip-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .chip-body { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+  .chip-body strong { color: var(--text-primary); }
+
+  .stream-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    position: relative; overflow: hidden;
+  }
+  .stream-meta { font-size: 10px; color: var(--text-muted); margin-bottom: 5px; }
+  .stream-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+  .stream-body { font-size: 11px; color: var(--text-secondary); }
+
+  /* ──────────────────────────────────────────────
+     CONCEPT 1 — DASHED
+  ────────────────────────────────────────────── */
+  .c1-forecast {
+    border: 1.5px dashed #4a4a4a !important;
+  }
+  .c1-forecast .card-icon {
+    border: 1.5px dashed #4a4a4a;
+  }
+  .c1-chip {
+    border: 1.5px dashed #4a4a4a !important;
+  }
+  .c1-stream {
+    border: 1.5px dashed #4a4a4a !important;
+  }
+  .c1-graph {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    height: 110px;
+    position: relative;
+    overflow: hidden;
+  }
+  .c1-graph svg { width: 100%; height: 100%; }
+
+  /* ──────────────────────────────────────────────
+     CONCEPT 2 — LUMINANCE / GLOW
+  ────────────────────────────────────────────── */
+  .c2-forecast {
+    border-color: rgba(245, 208, 10, 0.35) !important;
+    background: rgba(245, 208, 10, 0.04) !important;
+    box-shadow: 0 0 0 1px rgba(245, 208, 10, 0.2), 0 0 14px rgba(245, 208, 10, 0.08) !important;
+  }
+  .c2-forecast .card-icon {
+    background: rgba(245, 208, 10, 0.08);
+    border-color: rgba(245, 208, 10, 0.25);
+  }
+  .c2-forecast h3 { color: rgba(245, 208, 10, 0.9); }
+
+  .c2-chip {
+    border-color: rgba(245, 208, 10, 0.3) !important;
+    box-shadow: 0 0 12px rgba(245, 208, 10, 0.06) !important;
+  }
+  .c2-chip .chip-label { color: rgba(245, 208, 10, 0.5); }
+
+  .c2-stream {
+    border-color: rgba(245, 208, 10, 0.3) !important;
+    box-shadow: 0 0 10px rgba(245, 208, 10, 0.05) !important;
+  }
+  .c2-pulse {
+    display: inline-block;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--yellow);
+    box-shadow: 0 0 6px var(--yellow);
+    animation: pulse 2s ease-in-out infinite;
+    margin-right: 5px; vertical-align: middle;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* ──────────────────────────────────────────────
+     CONCEPT 3 — GRAIN / TEXTURE
+  ────────────────────────────────────────────── */
+  .c3-forecast::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='80' height='80' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+    background-size: 80px 80px;
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0.6;
+  }
+  .c3-hatch::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 4px,
+      rgba(255,255,255,0.025) 4px,
+      rgba(255,255,255,0.025) 5px
+    );
+    pointer-events: none; border-radius: inherit;
+  }
+
+  /* ──────────────────────────────────────────────
+     CONCEPT 4 — HORIZON / FADE
+  ────────────────────────────────────────────── */
+  .c4-forecast::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 55%;
+    background: linear-gradient(to right, transparent, var(--surface) 88%);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  .c4-chip::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 40%;
+    background: linear-gradient(to right, transparent, var(--surface) 90%);
+    pointer-events: none;
+  }
+  .c4-stream::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 45%;
+    background: linear-gradient(to right, transparent, var(--surface) 90%);
+    pointer-events: none;
+  }
+  .c4-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-muted); border: 1px solid var(--border);
+    border-radius: 3px; padding: 2px 5px; margin-bottom: 8px;
+  }
+  .c4-tag::before { content: '→'; font-size: 9px; }
+
+  /* ──────────────────────────────────────────────
+     CONCEPT 5 — SIGNAL MARK
+  ────────────────────────────────────────────── */
+  .c5-badge {
+    position: absolute; top: 12px; right: 12px;
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .c5-badge svg { width: 18px; height: 10px; }
+
+  .c5-chip-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--text-muted); margin-bottom: 6px;
+  }
+  .c5-chip-badge svg { width: 16px; height: 8px; }
+
+  .wave-svg path {
+    stroke: #555; stroke-width: 1.5; fill: none;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  .wave-svg.bright path { stroke: rgba(245,208,10,0.6); }
+
+  /* ── Concept nav tabs ── */
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 48px;
+    border-bottom: 1px solid var(--border); padding-bottom: 0;
+  }
+  .tab {
+    padding: 8px 14px; font-size: 12px; font-weight: 500;
+    color: var(--text-muted); border-bottom: 2px solid transparent;
+    cursor: pointer; transition: all 0.15s; margin-bottom: -1px;
+    background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text-secondary); }
+  .tab.active { color: var(--text-primary); border-bottom-color: var(--yellow); }
+
+  .concept-section { display: none; }
+  .concept-section.active { display: block; }
+
+  /* ── Section sub-labels ── */
+  .section-row { margin-bottom: 24px; }
+  .section-row-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-muted); margin-bottom: 10px;
+  }
+
+  /* ── Key ── */
+  .key-row {
+    display: flex; gap: 16px; margin-top: 16px;
+    font-size: 11px; color: var(--text-muted);
+  }
+  .key-item { display: flex; align-items: center; gap: 6px; }
+  .key-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+  .key-dot.forecast { background: #555; border: 1.5px dashed #666; }
+
+  /* ── Description box ── */
+  .desc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 11px; color: var(--text-secondary); line-height: 1.6;
+    margin-top: 20px;
+  }
+  .desc strong { color: var(--text-primary); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-header">
+    <h1>Forecasting — Visual Treatment Concepts</h1>
+    <p>Five approaches for distinguishing predicted/projected content from confirmed events across CA surfaces.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="show(1)">1 · Dashed</button>
+    <button class="tab" onclick="show(2)">2 · Luminance</button>
+    <button class="tab" onclick="show(3)">3 · Grain</button>
+    <button class="tab" onclick="show(4)">4 · Horizon</button>
+    <button class="tab" onclick="show(5)">5 · Signal</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       CONCEPT 1 — DASHED
+  ═══════════════════════════════════════════ -->
+  <div class="concept-section active" id="s1">
+    <div class="concept-label">
+      <div class="num">1</div>
+      <div>
+        <h2>Dashed — The Projection Line System</h2>
+        <span>Stroke style carries the meaning. Works across any colour, surface, or scale.</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <div class="section-row">
+      <div class="section-row-label">CA Shortcuts</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon">💬</div>
+          <h3>Ask</h3>
+          <p>Query events, actors, and signals across regions.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">✦</div>
+          <h3>Create</h3>
+          <p>Build reports, briefs, and structured outputs.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">◷</div>
+          <h3>Schedule</h3>
+          <p>Set automated monitoring and alert cadences.</p>
+        </div>
+        <div class="card c1-forecast">
+          <div class="card-icon">◈</div>
+          <h3>Forecast</h3>
+          <p>Project likely developments and scenario outcomes.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-row">
+      <div class="section-row-label">Response surface &amp; stream card</div>
+      <div class="also-row">
+        <div class="response-chip c1-chip">
+          <div class="chip-label">Forecast · Conflict escalation</div>
+          <div class="chip-body">There is a <strong>likely (65–75%) chance</strong> of further cross-border shelling within 72 hours based on current force posture and historical precedent from the April cycle.</div>
+        </div>
+        <div class="stream-card c1-stream">
+          <div class="stream-meta">Forecast · Generated 14:03 · 3 sources</div>
+          <div class="stream-title">Escalation probability — Eastern sector</div>
+          <div class="stream-body">Projected uptick in kinetic activity likely (70%) over next 48–72 hrs.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-row">
+      <div class="section-row-label">Graph — confirmed vs projected line</div>
+      <div class="c1-graph">
+        <svg viewBox="0 0 500 80" preserveAspectRatio="none">
+          <!-- Grid -->
+          <line x1="0" y1="20" x2="500" y2="20" stroke="#2a2a2a" stroke-width="1"/>
+          <line x1="0" y1="40" x2="500" y2="40" stroke="#2a2a2a" stroke-width="1"/>
+          <line x1="0" y1="60" x2="500" y2="60" stroke="#2a2a2a" stroke-width="1"/>
+          <!-- Confirmed line (solid) -->
+          <polyline points="0,60 60,52 120,48 180,42 240,38 300,35" stroke="#888" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <!-- Divider -->
+          <line x1="300" y1="10" x2="300" y2="75" stroke="#3a3a3a" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="302" y="9" fill="#444" font-size="8" font-family="sans-serif">now</text>
+          <!-- Forecast line (dashed) -->
+          <polyline points="300,35 360,28 420,22 480,16" stroke="#888" stroke-width="1.5" fill="none" stroke-dasharray="5,4" stroke-linecap="round"/>
+          <!-- Confidence band (dashed outline) -->
+          <polyline points="300,35 360,22 420,14 480,8" stroke="#555" stroke-width="1" fill="none" stroke-dasharray="3,4"/>
+          <polyline points="300,35 360,36 420,32 480,26" stroke="#555" stroke-width="1" fill="none" stroke-dasharray="3,4"/>
+          <!-- Labels -->
+          <text x="4" y="70" fill="#555" font-size="8" font-family="sans-serif">Confirmed</text>
+          <text x="310" y="70" fill="#555" font-size="8" font-family="sans-serif">Forecast →</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="desc">
+      <strong>What makes it work:</strong> The dashed stroke is already the global convention for "projected" — financial charts, weather maps, engineering drawings all use it. No new vocabulary to learn. The treatment layers cleanly on top of any colour scheme since it modifies stroke style, not hue. On the shortcut card it manifests as a dashed border; on the graph it continues the confirmed line as a dashed extension; on cards and stream panels it replaces the solid border.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       CONCEPT 2 — LUMINANCE
+  ═══════════════════════════════════════════ -->
+  <div class="concept-section" id="s2">
+    <div class="concept-label">
+      <div class="num">2</div>
+      <div>
+        <h2>Luminance — Glow + Opacity</h2>
+        <span>Confirmed = solid. Forecast = luminous, slightly translucent. Colour-agnostic.</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <div class="section-row">
+      <div class="section-row-label">CA Shortcuts</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon">💬</div>
+          <h3>Ask</h3>
+          <p>Query events, actors, and signals across regions.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">✦</div>
+          <h3>Create</h3>
+          <p>Build reports, briefs, and structured outputs.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">◷</div>
+          <h3>Schedule</h3>
+          <p>Set automated monitoring and alert cadences.</p>
+        </div>
+        <div class="card c2-forecast">
+          <div class="card-icon">◈</div>
+          <h3>Forecast</h3>
+          <p>Project likely developments and scenario outcomes.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-row">
+      <div class="section-row-label">Response surface &amp; stream card</div>
+      <div class="also-row">
+        <div class="response-chip c2-chip">
+          <div class="chip-label">
+            <span class="c2-pulse"></span>Forecast · Conflict escalation
+          </div>
+          <div class="chip-body">There is a <strong>likely (65–75%) chance</strong> of further cross-border shelling within 72 hours based on current force posture and historical precedent from the April cycle.</div>
+        </div>
+        <div class="stream-card c2-stream">
+          <div class="stream-meta"><span class="c2-pulse"></span>Forecast · Generated 14:03 · 3 sources</div>
+          <div class="stream-title">Escalation probability — Eastern sector</div>
+          <div class="stream-body">Projected uptick in kinetic activity likely (70%) over next 48–72 hrs.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-row" style="margin-top:4px">
+      <div class="section-row-label">Widget comparison</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div style="background:#1a1a1a; border:1px solid #2e2e2e; border-radius:8px; padding:14px 16px; flex:1; min-width:140px;">
+          <div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">Confirmed</div>
+          <div style="font-size:22px;font-weight:600;color:#f0f0f0;">47</div>
+          <div style="font-size:11px;color:#888;">Incidents this week</div>
+        </div>
+        <div style="background:rgba(245,208,10,0.04); border:1px solid rgba(245,208,10,0.3); border-radius:8px; padding:14px 16px; flex:1; min-width:140px; box-shadow:0 0 14px rgba(245,208,10,0.07);">
+          <div style="font-size:10px;color:rgba(245,208,10,0.5);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;"><span class="c2-pulse"></span>Forecast</div>
+          <div style="font-size:22px;font-weight:600;color:rgba(245,208,10,0.85);">62–71</div>
+          <div style="font-size:11px;color:#888;">Projected next week</div>
+        </div>
+        <div style="background:#1f1a1a; border:1px solid rgba(200,60,60,0.3); border-radius:8px; padding:14px 16px; flex:1; min-width:140px; box-shadow:0 0 14px rgba(200,60,60,0.06);">
+          <div style="font-size:10px;color:rgba(200,60,60,0.5);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(200,60,60,0.9);box-shadow:0 0 6px rgba(200,60,60,0.7);margin-right:5px;vertical-align:middle;animation:pulse 2s ease-in-out infinite;"></span>Forecast</div>
+          <div style="font-size:22px;font-weight:600;color:rgba(220,80,80,0.85);">High</div>
+          <div style="font-size:11px;color:#888;">Threat level projection</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="desc">
+      <strong>What makes it work:</strong> The glow is additive — it sits on top of whatever colour the widget already uses. A red widget stays red; a yellow widget stays yellow. The glow and reduced opacity are the consistent signal, not the hue. The pulsing dot reinforces "live projection" without being noisy. On dark backgrounds the glow reads immediately as something speculative and alive, distinct from the flat solidity of confirmed data.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       CONCEPT 3 — GRAIN
+  ═══════════════════════════════════════════ -->
+  <div class="concept-section" id="s3">
+    <div class="concept-label">
+      <div class="num">3</div>
+      <div>
+        <h2>Grain — Noise &amp; Texture Overlay</h2>
+        <span>Uncertainty made tactile. Hatching and grain overlay any colour without displacing it.</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <div class="section-row">
+      <div class="section-row-label">CA Shortcuts</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon">💬</div>
+          <h3>Ask</h3>
+          <p>Query events, actors, and signals across regions.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">✦</div>
+          <h3>Create</h3>
+          <p>Build reports, briefs, and structured outputs.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">◷</div>
+          <h3>Schedule</h3>
+          <p>Set automated monitoring and alert cadences.</p>
+        </div>
+        <div class="card c3-hatch">
+          <div class="card-icon">◈</div>
+          <h3>Forecast</h3>
+          <p>Project likely developments and scenario outcomes.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-row">
+      <div class="section-row-label">Response surface &amp; stream card</div>
+      <div class="also-row">
+        <div class="response-chip c3-hatch">
+          <div class="chip-label">Forecast · Conflict escalation</div>
+          <div class="chip-body">There is a <strong>likely (65–75%) chance</strong> of further cross-border shelling within 72 hours based on current force posture and historical precedent from the April cycle.</div>
+        </div>
+        <div class="stream-card c3-hatch">
+          <div class="stream-meta">Forecast · Generated 14:03 · 3 sources</div>
+          <div class="stream-title">Escalation probability — Eastern sector</div>
+          <div class="stream-body">Projected uptick in kinetic activity likely (70%) over next 48–72 hrs.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-row" style="margin-top:4px">
+      <div class="section-row-label">Widget — hatch overlay preserves colour coding</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div style="background:#1a1a1a; border:1px solid #2e2e2e; border-radius:8px; padding:14px 16px; flex:1; min-width:140px;">
+          <div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">Confirmed</div>
+          <div style="font-size:22px;font-weight:600;color:#f0f0f0;">47</div>
+          <div style="font-size:11px;color:#888;">Incidents this week</div>
+        </div>
+        <div style="background:#1a1a1a; border:1px solid rgba(245,208,10,0.4); border-radius:8px; padding:14px 16px; flex:1; min-width:140px; position:relative; overflow:hidden;">
+          <div style="position:absolute;inset:0;background:repeating-linear-gradient(-45deg,transparent,transparent 4px,rgba(255,255,255,0.028) 4px,rgba(255,255,255,0.028) 5px);pointer-events:none;border-radius:inherit;"></div>
+          <div style="font-size:10px;color:rgba(245,208,10,0.55);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">Forecast</div>
+          <div style="font-size:22px;font-weight:600;color:rgba(245,208,10,0.85);">62–71</div>
+          <div style="font-size:11px;color:#888;">Projected next week</div>
+        </div>
+        <div style="background:#1f1a1a; border:1px solid rgba(200,60,60,0.35); border-radius:8px; padding:14px 16px; flex:1; min-width:140px; position:relative; overflow:hidden;">
+          <div style="position:absolute;inset:0;background:repeating-linear-gradient(-45deg,transparent,transparent 4px,rgba(255,255,255,0.028) 4px,rgba(255,255,255,0.028) 5px);pointer-events:none;border-radius:inherit;"></div>
+          <div style="font-size:10px;color:rgba(200,60,60,0.5);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">Forecast</div>
+          <div style="font-size:22px;font-weight:600;color:rgba(220,80,80,0.85);">High</div>
+          <div style="font-size:11px;color:#888;">Threat level projection</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="desc">
+      <strong>What makes it work:</strong> Hatching is the cartographic and engineering convention for "this area is different / uncertain." It overlays on top of any colour without changing the hue — the red widget stays red, but you immediately know it's a projection. At small sizes the pattern is subtle; on larger surfaces (map zone overlays, graph area fills) it becomes more prominent. The texture density could also encode confidence: sparse hatching = high confidence, dense hatching = speculative.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       CONCEPT 4 — HORIZON
+  ═══════════════════════════════════════════ -->
+  <div class="concept-section" id="s4">
+    <div class="concept-label">
+      <div class="num">4</div>
+      <div>
+        <h2>Horizon — Directional Fade</h2>
+        <span>Content dissolves toward the leading edge. Direction = forward = uncertain.</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <div class="section-row">
+      <div class="section-row-label">CA Shortcuts</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon">💬</div>
+          <h3>Ask</h3>
+          <p>Query events, actors, and signals across regions.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">✦</div>
+          <h3>Create</h3>
+          <p>Build reports, briefs, and structured outputs.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">◷</div>
+          <h3>Schedule</h3>
+          <p>Set automated monitoring and alert cadences.</p>
+        </div>
+        <div class="card c4-forecast">
+          <div class="c4-tag">Projection</div>
+          <div class="card-icon">◈</div>
+          <h3>Forecast</h3>
+          <p>Project likely developments and scenario outcomes.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-row">
+      <div class="section-row-label">Response surface &amp; stream card</div>
+      <div class="also-row">
+        <div class="response-chip c4-chip">
+          <div class="chip-label"><span class="c4-tag" style="margin-bottom:0">Projection</span></div>
+          <div class="chip-body" style="margin-top:8px">There is a <strong>likely (65–75%) chance</strong> of further cross-border shelling within 72 hours based on current force posture and historical precedent from the April cycle.</div>
+        </div>
+        <div class="stream-card c4-stream">
+          <div class="stream-meta">Forecast · Generated 14:03 · 3 sources</div>
+          <div class="stream-title">Escalation probability — Eastern sector</div>
+          <div class="stream-body">Projected uptick in kinetic activity likely (70%) over next 48–72 hrs.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-row" style="margin-top:4px">
+      <div class="section-row-label">Graph — timeline fade at projection point</div>
+      <div class="c1-graph">
+        <svg viewBox="0 0 500 80" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="forecastFade" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#888" stop-opacity="1"/>
+              <stop offset="100%" stop-color="#888" stop-opacity="0.15"/>
+            </linearGradient>
+            <linearGradient id="bandFade" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#444" stop-opacity="0.4"/>
+              <stop offset="100%" stop-color="#444" stop-opacity="0.05"/>
+            </linearGradient>
+          </defs>
+          <line x1="0" y1="20" x2="500" y2="20" stroke="#2a2a2a" stroke-width="1"/>
+          <line x1="0" y1="40" x2="500" y2="40" stroke="#2a2a2a" stroke-width="1"/>
+          <line x1="0" y1="60" x2="500" y2="60" stroke="#2a2a2a" stroke-width="1"/>
+          <!-- Confirmed -->
+          <polyline points="0,60 60,52 120,48 180,42 240,38 300,35" stroke="#888" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <!-- Divider -->
+          <line x1="300" y1="10" x2="300" y2="75" stroke="#3a3a3a" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="302" y="9" fill="#444" font-size="8" font-family="sans-serif">now</text>
+          <!-- Confidence band fading -->
+          <polygon points="300,35 360,22 420,14 480,8 480,26 420,32 360,36" fill="url(#bandFade)"/>
+          <!-- Forecast line fading -->
+          <polyline points="300,35 360,28 420,22 480,16" stroke="url(#forecastFade)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <text x="4" y="70" fill="#555" font-size="8" font-family="sans-serif">Confirmed</text>
+          <text x="310" y="70" fill="#555" font-size="8" font-family="sans-serif">Fades to horizon →</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="desc">
+      <strong>What makes it work:</strong> The fade direction is always semantic — it points toward "forward." On a timeline card the right edge dissolves; on a map a forecast zone fades outward from its centre; on a graph the projection trail loses opacity. This is the most cinematic of the five concepts and works especially well on stream cards and larger panels. The "Projection" tag provides an explicit label for contexts where the fade alone might be too subtle (small widgets).
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       CONCEPT 5 — SIGNAL
+  ═══════════════════════════════════════════ -->
+  <div class="concept-section" id="s5">
+    <div class="concept-label">
+      <div class="num">5</div>
+      <div>
+        <h2>Signal — The Wave Mark</h2>
+        <span>An ownable icon motif that travels with all forecast content regardless of surface or colour.</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <!-- Wave mark showcase -->
+    <div class="section-row">
+      <div class="section-row-label">The mark — at key sizes</div>
+      <div style="display:flex;align-items:center;gap:24px;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
+        <div style="text-align:center;">
+          <svg width="48" height="24" viewBox="0 0 48 24"><path d="M2,18 C8,18 8,6 16,6 C24,6 24,18 32,18 C40,18 40,6 46,6" stroke="#888" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+          <div style="font-size:9px;color:#555;margin-top:4px;">48px</div>
+        </div>
+        <div style="text-align:center;">
+          <svg width="28" height="14" viewBox="0 0 28 14"><path d="M1,10 C4,10 4,4 9,4 C14,4 14,10 19,10 C24,10 24,4 27,4" stroke="#888" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+          <div style="font-size:9px;color:#555;margin-top:4px;">28px</div>
+        </div>
+        <div style="text-align:center;">
+          <svg width="18" height="10" viewBox="0 0 18 10"><path d="M1,7 C3,7 3,3 6,3 C9,3 9,7 12,7 C15,7 15,3 17,3" stroke="#888" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+          <div style="font-size:9px;color:#555;margin-top:4px;">18px</div>
+        </div>
+        <div style="text-align:center;">
+          <svg width="12" height="7" viewBox="0 0 12 7"><path d="M1,5 C2,5 2,2 4,2 C6,2 6,5 8,5 C10,5 10,2 11,2" stroke="#888" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+          <div style="font-size:9px;color:#555;margin-top:4px;">12px</div>
+        </div>
+        <div style="flex:1;font-size:11px;color:#666;line-height:1.6;padding-left:8px;">
+          A probability-wave / sine-curve reduced to its simplest readable form. Legible at badge size. Animatable (slow left-scroll) for live forecasts.
+        </div>
+      </div>
+    </div>
+
+    <div class="section-row">
+      <div class="section-row-label">CA Shortcuts</div>
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon">💬</div>
+          <h3>Ask</h3>
+          <p>Query events, actors, and signals across regions.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">✦</div>
+          <h3>Create</h3>
+          <p>Build reports, briefs, and structured outputs.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">◷</div>
+          <h3>Schedule</h3>
+          <p>Set automated monitoring and alert cadences.</p>
+        </div>
+        <div class="card" style="position:relative;">
+          <div class="c5-badge">
+            <svg class="wave-svg" viewBox="0 0 18 10"><path d="M1,7 C3,7 3,3 6,3 C9,3 9,7 12,7 C15,7 15,3 17,3"/></svg>
+          </div>
+          <div class="card-icon">◈</div>
+          <h3>Forecast</h3>
+          <p>Project likely developments and scenario outcomes.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-row">
+      <div class="section-row-label">Response surface &amp; stream card</div>
+      <div class="also-row">
+        <div class="response-chip" style="position:relative;">
+          <div class="c5-chip-badge">
+            <svg class="wave-svg bright" viewBox="0 0 18 10"><path d="M1,7 C3,7 3,3 6,3 C9,3 9,7 12,7 C15,7 15,3 17,3"/></svg>
+            Forecast · Conflict escalation
+          </div>
+          <div class="chip-body">There is a <strong>likely (65–75%) chance</strong> of further cross-border shelling within 72 hours based on current force posture and historical precedent from the April cycle.</div>
+        </div>
+        <div class="stream-card" style="position:relative;">
+          <div class="stream-meta">
+            <span style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle;">
+              <svg class="wave-svg" viewBox="0 0 16 8" width="16" height="8"><path d="M1,6 C2.5,6 2.5,2 5,2 C7.5,2 7.5,6 10,6 C12.5,6 12.5,2 15,2" stroke="#555" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+              Forecast
+            </span>
+            · Generated 14:03 · 3 sources
+          </div>
+          <div class="stream-title">Escalation probability — Eastern sector</div>
+          <div class="stream-body">Projected uptick in kinetic activity likely (70%) over next 48–72 hrs.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-row" style="margin-top:4px">
+      <div class="section-row-label">Widget — mark travels with any colour</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div style="background:#1a1a1a;border:1px solid rgba(245,208,10,0.3);border-radius:8px;padding:14px 16px;flex:1;min-width:140px;position:relative;">
+          <div style="font-size:10px;color:rgba(245,208,10,0.5);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;display:flex;align-items:center;gap:5px;">
+            <svg viewBox="0 0 16 8" width="14" height="7"><path d="M1,6 C2.5,6 2.5,2 5,2 C7.5,2 7.5,6 10,6 C12.5,6 12.5,2 15,2" stroke="rgba(245,208,10,0.6)" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+            Forecast
+          </div>
+          <div style="font-size:22px;font-weight:600;color:rgba(245,208,10,0.85);">62–71</div>
+          <div style="font-size:11px;color:#888;">Projected incidents</div>
+        </div>
+        <div style="background:#1f1a1a;border:1px solid rgba(200,60,60,0.3);border-radius:8px;padding:14px 16px;flex:1;min-width:140px;position:relative;">
+          <div style="font-size:10px;color:rgba(200,60,60,0.5);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;display:flex;align-items:center;gap:5px;">
+            <svg viewBox="0 0 16 8" width="14" height="7"><path d="M1,6 C2.5,6 2.5,2 5,2 C7.5,2 7.5,6 10,6 C12.5,6 12.5,2 15,2" stroke="rgba(200,60,60,0.7)" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+            Forecast
+          </div>
+          <div style="font-size:22px;font-weight:600;color:rgba(220,80,80,0.85);">High</div>
+          <div style="font-size:11px;color:#888;">Projected threat level</div>
+        </div>
+        <div style="background:#1a1c1a;border:1px solid rgba(80,180,80,0.3);border-radius:8px;padding:14px 16px;flex:1;min-width:140px;position:relative;">
+          <div style="font-size:10px;color:rgba(80,180,80,0.5);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;display:flex;align-items:center;gap:5px;">
+            <svg viewBox="0 0 16 8" width="14" height="7"><path d="M1,6 C2.5,6 2.5,2 5,2 C7.5,2 7.5,6 10,6 C12.5,6 12.5,2 15,2" stroke="rgba(80,180,80,0.6)" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+            Forecast
+          </div>
+          <div style="font-size:22px;font-weight:600;color:rgba(90,200,90,0.85);">Stable</div>
+          <div style="font-size:11px;color:#888;">Projected stability index</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="desc">
+      <strong>What makes it work:</strong> The wave mark is colour-matched to whatever widget it lives in — yellow widget gets a yellow wave, red widget gets a red wave. The mark itself is the constant; the colour is inherited. This makes it the most robust solution for the multi-colour widget system. It's also the most brandable: like a lock icon or a live badge, it becomes an immediately learnable glyph. The mark can animate (slow continuous scroll) for active live forecasts vs static for historical projections.
+    </div>
+  </div>
+
+</div>
+
+<script>
+function show(n) {
+  document.querySelectorAll('.concept-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('s' + n).classList.add('active');
+  document.querySelectorAll('.tab')[n - 1].classList.add('active');
+}
+</script>
+</body>
+</html>
