@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/card-animation_new.html" }
+    { "source": "/", "destination": "/card-animation_new.html" },
+    { "source": "/section1", "destination": "/section1-tests.html" }
   ]
 }

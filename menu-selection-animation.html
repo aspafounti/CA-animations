@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Menu Selection Animation</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 565px;
+  height: 465px;
+  background: #ffffff;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="565" height="465"></canvas>
+<script>
+const DPR = 2;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = 565 * DPR;
+canvas.height = 465 * DPR;
+canvas.style.width = '565px';
+canvas.style.height = '465px';
+ctx.scale(DPR, DPR);
+
+/* ── helpers ── */
+function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+function ease(t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); }
+function easeOut(t) { t = clamp(t, 0, 1); return 1 - Math.pow(1 - t, 3); }
+function lerpHex(a, b, t) {
+  const r = Math.round(a[0] + (b[0] - a[0]) * t);
+  const g = Math.round(a[1] + (b[1] - a[1]) * t);
+  const bl = Math.round(a[2] + (b[2] - a[2]) * t);
+  return `rgb(${r},${g},${bl})`;
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+/* ── design tokens ── */
+const FRAME_BG = '#1a1a19';
+const DIM      = [140, 140, 136];
+const BRIGHT   = [242, 242, 240];
+const GOLD     = [255, 204, 0];
+const GOLD_HEX = '#ffcc00';
+const GOLD_BG  = 'rgba(38,32,3,';   // alpha appended
+const HOVER_WHITE = 'rgba(255,255,255,';
+
+const CARD_W = 565, CARD_H = 465, CARD_R = 26;
+
+/* ── layout (row bands ported from make_menu_selection_gif.py) ── */
+const ITEMS = [
+  { key: 'home',      label: 'Home',      y: 154 },
+  { key: 'library',   label: 'Libraries', y: 239 },
+  { key: 'alerts',    label: 'Alerts',    y: 320 },
+];
+const ICON_CX = 158;   // icon centre x
+const LABEL_X = 200;   // label left edge
+const ICON_SIZE = 30;
+
+/* hover/selected pill behind Libraries — exact HRECT from the python source */
+const PILL = { x0: 129.2, y0: 203.7, x1: 436.8, y1: 261.3, r: 16 };
+
+ctx.textBaseline = 'middle';
+ctx.textAlign = 'left';
+
+/* ── icon drawing (open outline glyphs) ── */
+function drawHome(cx, cy, color) {
+  const hs = ICON_SIZE / 2;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.4;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx - hs, cy + hs * 0.85);
+  ctx.lineTo(cx - hs, cy - hs * 0.05);
+  ctx.lineTo(cx, cy - hs);
+  ctx.lineTo(cx + hs, cy - hs * 0.05);
+  ctx.lineTo(cx + hs, cy + hs * 0.85);
+  ctx.stroke();
+}
+function drawBook(cx, cy, color) {
+  const hs = ICON_SIZE / 2;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.4;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - hs * 0.55);
+  ctx.quadraticCurveTo(cx - hs * 0.35, cy - hs * 0.85, cx - hs, cy - hs * 0.6);
+  ctx.lineTo(cx - hs, cy + hs * 0.55);
+  ctx.quadraticCurveTo(cx - hs * 0.35, cy + hs * 0.3, cx, cy + hs * 0.75);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - hs * 0.55);
+  ctx.quadraticCurveTo(cx + hs * 0.35, cy - hs * 0.85, cx + hs, cy - hs * 0.6);
+  ctx.lineTo(cx + hs, cy + hs * 0.55);
+  ctx.quadraticCurveTo(cx + hs * 0.35, cy + hs * 0.3, cx, cy + hs * 0.75);
+  ctx.stroke();
+}
+function drawBell(cx, cy, color) {
+  const hs = ICON_SIZE / 2;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.4;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(cx, cy - hs * 0.15, hs * 0.7, Math.PI, 0, false);
+  ctx.lineTo(cx + hs * 0.85, cy + hs * 0.55);
+  ctx.lineTo(cx - hs * 0.85, cy + hs * 0.55);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy + hs * 0.78, hs * 0.16, 0, Math.PI * 2);
+  ctx.stroke();
+}
+function drawIcon(key, cx, cy, color) {
+  if (key === 'home') drawHome(cx, cy, color);
+  else if (key === 'library') drawBook(cx, cy, color);
+  else drawBell(cx, cy, color);
+}
+
+/* ── row rendering ── */
+function drawDimRow(idx, xOffset) {
+  const item = ITEMS[idx];
+  ctx.save();
+  ctx.translate(xOffset, 0);
+  const c = `rgb(${DIM.join(',')})`;
+  drawIcon(item.key, ICON_CX, item.y, c);
+  ctx.font = '600 26px -apple-system, "SF Pro Text", system-ui, sans-serif';
+  ctx.fillStyle = c;
+  ctx.fillText(item.label, LABEL_X, item.y + 1);
+  ctx.restore();
+}
+function drawLibraryRow(xOffset, hoverAlpha, goldT, squash) {
+  const item = ITEMS[1];
+  ctx.save();
+  ctx.translate(xOffset, 0);
+  ctx.translate(0, item.y);
+  ctx.scale(1, squash);
+  ctx.translate(0, -item.y);
+
+  if (goldT > 0.001) {
+    roundRect(PILL.x0, PILL.y0, PILL.x1 - PILL.x0, PILL.y1 - PILL.y0, PILL.r);
+    ctx.fillStyle = GOLD_BG + goldT.toFixed(3) + ')';
+    ctx.fill();
+  } else if (hoverAlpha > 0.001) {
+    roundRect(PILL.x0, PILL.y0, PILL.x1 - PILL.x0, PILL.y1 - PILL.y0, PILL.r);
+    ctx.fillStyle = HOVER_WHITE + (0.15 * hoverAlpha).toFixed(3) + ')';
+    ctx.fill();
+  }
+
+  const color = lerpHex(BRIGHT, GOLD, goldT);
+  drawIcon(item.key, ICON_CX, item.y, color);
+  ctx.font = '600 26px -apple-system, "SF Pro Text", system-ui, sans-serif';
+  ctx.fillStyle = color;
+  ctx.fillText(item.label, LABEL_X, item.y + 1);
+  ctx.restore();
+}
+
+/* ── cursor ── */
+function drawCursor(x, y, pressing) {
+  const s = pressing ? 0.88 : 1.0;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s, s);
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 3;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0, 18);
+  ctx.lineTo(4, 14);
+  ctx.lineTo(7, 20);
+  ctx.lineTo(9.5, 19);
+  ctx.lineTo(6.5, 13);
+  ctx.lineTo(11, 13);
+  ctx.closePath();
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 1.5;
+  ctx.fillStyle = '#ffffff';
+  ctx.stroke();
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ── timeline @24fps (ported 1:1 from make_menu_selection_gif.py) ── */
+const IDLE_END = 10, MOVE_END = 38, HOVER_END = 48, CLICK_END = 52, SELECT_END = 74;
+const SWOOP_LEN = 40, TOTAL = 128, FPS = 24;
+const FADE = 3;
+const REST = { x: 518.3, y: 42.0 };
+const LAND = { x: 340.0, y: 230.0 };
+const HRECT = { x0: PILL.x0, y0: PILL.y0, x1: PILL.x1, y1: PILL.y1 };
+const OFF = 540.0, TILT = 38.0;
+
+function computeTip(f) {
+  if (f < IDLE_END) return { x: REST.x, y: REST.y };
+  if (f < MOVE_END) {
+    const t = easeOut((f - IDLE_END) / (MOVE_END - IDLE_END));
+    return { x: lerp(REST.x, LAND.x, t), y: lerp(REST.y, LAND.y, t) };
+  }
+  if (f < SELECT_END) return { x: LAND.x, y: LAND.y };
+  const ct = easeOut((f - SELECT_END) / 20);
+  return { x: lerp(LAND.x, REST.x, ct), y: lerp(LAND.y, REST.y, ct) };
+}
+function inRect(pt) {
+  return pt.x >= HRECT.x0 && pt.x <= HRECT.x1 && pt.y >= HRECT.y0 && pt.y <= HRECT.y1;
+}
+let F_ENTER = MOVE_END;
+for (let f = IDLE_END; f < MOVE_END; f++) {
+  if (inRect(computeTip(f))) { F_ENTER = f; break; }
+}
+function swoopOffsets(sw) {
+  let base;
+  if (sw < 0.5) base = -OFF * Math.pow(sw / 0.5, 3);
+  else base = OFF * Math.pow(1 - (sw - 0.5) / 0.5, 3);
+  const tilt = -TILT * Math.sin(Math.PI * sw);
+  return [base - tilt, base, base + tilt];
+}
+
+function getState(f) {
+  let hoverAlpha = 0, goldT = 0, squash = 1, rowOffsets = [0, 0, 0], pressing = false;
+  const tip = computeTip(f);
+  if (f < MOVE_END) {
+    hoverAlpha = f >= F_ENTER ? clamp((f - F_ENTER) / FADE, 0, 1) : 0;
+  } else if (f < HOVER_END) {
+    hoverAlpha = 1;
+  } else if (f < CLICK_END) {
+    const ct = clamp((f - HOVER_END) / (CLICK_END - HOVER_END), 0, 1);
+    hoverAlpha = 1 - ct;
+    goldT = ct;
+    squash = 1 - 0.05 * Math.sin(Math.PI * ct);
+    pressing = (f - HOVER_END) < 2;
+  } else if (f < SELECT_END) {
+    goldT = 1;
+  } else {
+    const sw = clamp((f - SELECT_END) / SWOOP_LEN, 0, 1);
+    rowOffsets = swoopOffsets(sw);
+    goldT = sw < 0.5 ? 1 : 0;
+    hoverAlpha = 0;
+  }
+  return { tip, hoverAlpha, goldT, squash, rowOffsets, pressing };
+}
+
+/* ── render ── */
+function render(f) {
+  const s = getState(f);
+
+  ctx.clearRect(0, 0, CARD_W, CARD_H);
+  ctx.save();
+  roundRect(0, 0, CARD_W, CARD_H, CARD_R);
+  ctx.clip();
+
+  ctx.fillStyle = FRAME_BG;
+  ctx.fillRect(0, 0, CARD_W, CARD_H);
+
+  drawDimRow(0, s.rowOffsets[0]);
+  drawDimRow(2, s.rowOffsets[2]);
+  drawLibraryRow(s.rowOffsets[1], s.hoverAlpha, s.goldT, s.squash);
+  drawCursor(s.tip.x, s.tip.y, s.pressing);
+
+  ctx.restore();
+}
+
+/* ── loop ── */
+let frame = 0;
+function tick() {
+  render(frame);
+  frame = (frame + 1) % TOTAL;
+  setTimeout(() => requestAnimationFrame(tick), 1000 / FPS);
+}
+tick();
+</script>
+</body>
+</html>
